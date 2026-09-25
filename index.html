@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benar atau Salah? - Informatika</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 { color: #2c3e50; margin-bottom: 10px; font-size: 1.6rem; }
+        .skor {
+            background: #f0f9ff;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #0066cc;
+            font-size: 1.1rem;
+        }
+        .soal-box {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border-left: 5px solid #4facfe;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #2c3e50;
+        }
+        .tombol-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .tombol {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .tombol:hover { transform: scale(1.05); }
+        .tombol-benar { background: #2ecc71; color: white; }
+        .tombol-salah { background: #e74c3c; color: white; }
+        .feedback {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+            text-align: left;
+            line-height: 1.5;
+        }
+        .feedback.benar { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .feedback.salah { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .lanjut-btn {
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: none;
+            margin: 0 auto;
+        }
+        .lanjut-btn:hover { background: #2980b9; }
+        .akhir { display: none; }
+        .progress { margin-bottom: 15px; color: #7f8c8d; font-size: 0.95rem; }
+        .edit-info { background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Benar atau Salah?<br>Materi Informatika</h1>
+        <div class="edit-info">💡 Edit soal di Google Sheet → ekspor CSV → tempel ke file `soal.csv` di GitHub untuk update</div>
+        <div class="progress" id="progress">Soal 1 dari 0</div>
+        <div class="skor">Skor: <span id="nilai">0</span></div>
+        
+        <div id="layar-soal">
+            <div class="soal-box" id="teks-soal"></div>
+            <div class="tombol-group">
+                <button class="tombol tombol-benar" onclick="cekJawaban(true)">✅ BENAR</button>
+                <button class="tombol tombol-salah" onclick="cekJawaban(false)">❌ SALAH</button>
+            </div>
+            <div class="feedback" id="feedback"></div>
+            <button class="lanjut-btn" id="tombol-lanjut" onclick="soalBerikutnya()">Soal Berikutnya →</button>
+        </div>
+
+        <div class="akhir" id="layar-akhir">
+            <h2>🎉 Permainan Selesai!</h2>
+            <p style="margin: 20px 0; font-size: 1.2rem;">Skor Akhir Kamu:</p>
+            <p style="font-size: 2.5rem; font-weight: bold; color: #2c3e50;" id="skor-akhir">0/0</p>
+            <p style="margin: 20px 0;" id="pesan-akhir"></p>
+            <button class="lanjut-btn" style="display: inline-block; margin-top: 10px;" onclick="mulaiUlang()">Muat Ulang</button>
+        </div>
+    </div>
+
+<script>
+// ==== CARA UPDATE SOAL ====
+// 1. Di GitHub, buat file baru bernama: soal.csv
+// 2. Isi dengan format: teks,jawaban,penjelasan
+// 3. Baris pertama: teks,jawaban,penjelasan
+// 4. Baris kedua dst: Soal kamu,BENAR/SALAH,Keterangan
+// ===========================
+
+let daftarSoal = [];
+let nomor = 0, skor = 0, sudahDijawab = false;
+
+async function ambilSoal() {
+    try {
+        const res = await fetch("soal.csv");
+        if (!res.ok) throw new Error("Tidak ada file soal.csv");
+        const teks = await res.text();
+        const baris = teks.split("\n").map(r => {
+            const hasil = [];
+            let bagian = "", dalamKutip = false;
+            for (let c of r) {
+                if (c === '"') dalamKutip = !dalamKutip;
+                else if (c === "," && !dalamKutip) { hasil.push(bagian.trim()); bagian = ""; }
+                else bagian += c;
+            }
+            hasil.push(bagian.trim());
+            return hasil;
+        });
+        
+        daftarSoal = [];
+        for (let i = 1; i < baris.length; i++) {
+            const k = baris[i];
+            if (!k || k.length < 3) continue;
+            const teks = k[0].replace(/^"|"$/g, "");
+            const jawab = k[1].toUpperCase().replace(/^"|"$/g, "") === "BENAR";
+            const jelas = k[2].replace(/^"|"$/g, "") || (jawab ? "✅ Benar!" : "❌ Salah!");
+            if (teks) daftarSoal.push({ teks, jawaban: jawab, penjelasan: jelas });
+        }
+    } catch {
+        // Soal bawaan jika belum ada soal.csv
+        daftarSoal = [
+            { teks: "CPU adalah otak dari komputer", jawaban: true, penjelasan: "✅ BENAR: CPU memproses semua perintah dan data." },
+            { teks: "RAM menyimpan data permanen meski dimatikan", jawaban: false, penjelasan: "❌ SALAH: Data hilang saat dimatikan." },
+            { teks: "Algoritma = langkah logis menyelesaikan masalah", jawaban: true, penjelasan: "✅ BENAR: Itulah definisi dasar algoritma." }
+        ];
+    }
+    
+    document.querySelector(".edit-info").style.display = daftarSoal.length > 3 ? "none" : "block";
+    tampilSoal();
+}
+
+function tampilSoal() {
+    sudahDijawab = false;
+    document.getElementById("progress").textContent = `Soal ${nomor+1} dari ${daftarSoal.length}`;
+    document.getElementById("teks-soal").textContent = daftarSoal[nomor].teks;
+    document.getElementById("feedback").style.display = "none";
+    document.getElementById("tombol-lanjut").style.display = "none";
+    document.querySelector(".tombol-group").style.display = "flex";
+}
+
+function cekJawaban(pilihan) {
+    if (sudahDijawab) return;
+    sudahDijawab = true;
+
+    const benar = pilihan === daftarSoal[nomor].jawaban;
+    const fb = document.getElementById("feedback");
+    fb.className = "feedback " + (benar ? "benar" : "salah");
+    fb.textContent = daftarSoal[nomor].penjelasan;
+    fb.style.display = "block";
+
+    if (benar) { skor++; document.getElementById("nilai").textContent = skor; }
+
+    if (nomor < daftarSoal.length - 1) {
+        document.getElementById("tombol-lanjut").style.display = "block";
+    } else {
+        setTimeout(tampilHasil, 1500);
+    }
+    document.querySelector(".tombol-group").style.display = "none";
+}
+
+function soalBerikutnya() { nomor++; tampilSoal(); }
+
+function tampilHasil() {
+    document.getElementById("layar-soal").style.display = "none";
+    document.getElementById("layar-akhir").style.display = "block";
+    document.getElementById("skor-akhir").textContent = `${skor}/${daftarSoal.length}`;
+    
+    const p = skor / daftarSoal.length;
+    document.getElementById("pesan-akhir").textContent = 
+        p >= 0.9 ? "🌟 Luar biasa!" :
+        p >= 0.7 ? "👍 Bagus, tingkatkan lagi!" :
+        p >= 0.5 ? "💪 Cukup, pelajari lagi bagian yang belum paham!" :
+        "📚 Jangan menyerah, mari pelajari ulang!";
+}
+
+function mulaiUlang() {
+    nomor = 0; skor = 0;
+    document.getElementById("nilai").textContent = "0";
+    document.getElementById("layar-soal").style.display = "block";
+    document.getElementById("layar-akhir").style.display = "none";
+    ambilSoal();
+}
+
+ambilSoal();
+</script>
+</body>
+</html>
