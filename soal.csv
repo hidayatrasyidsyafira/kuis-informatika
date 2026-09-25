@@ -1,4 +1,11 @@
 teks,jawaban,penjelasan
-CPU adalah otak komputer,BENAR,CPU memproses semua perintah
-RAM permanen,SALAH,Data hilang saat dimatikan
-Wi-Fi pakai gelombang radio,BENAR,Tidak butuh kabel
+Stack bekerja berdasarkan prinsip Last In First Out (LIFO), artinya data yang terakhir masuk akan keluar pertama kali,BENAR,Sesuai definisi: LIFO = yang terakhir masuk, pertama kali keluar
+Prinsip kerja Stack mirip seperti mengambil piring dari tumpukan paling bawah,SALAH,Mirip mengambil piring dari paling atas, bukan bawah
+Operasi Push berfungsi menambahkan data ke bagian atas Stack,BENAR,Push = menambah data ke posisi teratas
+Operasi Pop berfungsi menampilkan semua isi Stack tanpa menghapusnya,SALAH,Pop = mengambil & menghapus data paling atas. Yang hanya melihat = Peek
+Operasi Peek (Top) digunakan untuk melihat data di posisi paling atas tanpa menghapusnya,BENAR,Sesuai materi: Peek hanya melihat, tidak menghapus
+Jika urutan masuk buku: Bahasa Indonesia → Matematika → Informatika, maka yang pertama keluar adalah Bahasa Indonesia,SALAH,Yang terakhir masuk = Informatika → dia yang pertama keluar
+Fitur Undo pada Microsoft Word merupakan salah satu contoh penerapan Stack,BENAR,Riwayat perubahan disimpan bertumpuk, yang terakhir diubah dibatalkan duluan
+Salah satu kelebihan Stack adalah proses penambahan dan penghapusan data berjalan cepat,BENAR,Hanya mengakses bagian atas, prosesnya sangat efisien
+Pada Stack, kita bisa langsung mengambil data yang berada di posisi tengah tanpa mengeluarkan data di atasnya,SALAH,Kekurangan Stack: hanya bisa akses yang paling atas. Data di tengah tidak bisa diambil langsung
+Riwayat tombol Kembali (Back) di peramban internet tidak menggunakan prinsip Stack,SALAH,Riwayat browser = contoh Stack — halaman terakhir dikunjungi, yang pertama bisa dikembalikan
